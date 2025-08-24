@@ -1,8 +1,9 @@
 package com.vtlong.my_spring_boot_project.controller.admin;
 
 import java.util.List;
-import java.util.Optional;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -26,29 +27,34 @@ import jakarta.validation.Valid;
 @RequestMapping("/admin/users")
 public class AdminUserController {
     
+    private static final Logger logger = LoggerFactory.getLogger(AdminUserController.class);
+    
     @Autowired
     private AdminUserService adminUserService;
     
     @GetMapping
     public ResponseEntity<List<UserResponseDto>> getAllUsers() {
+        logger.info("GET /admin/users - Fetching all users");
         List<UserResponseDto> users = adminUserService.findAll();
+        logger.info("GET /admin/users - Retrieved {} users", users.size());
         return ResponseEntity.ok(users);
     }
     
     @GetMapping("/{id}")
     public ResponseEntity<UserResponseDto> getUserById(@PathVariable String id) {
-        Optional<UserResponseDto> userOptional = adminUserService.findById(id);
+        logger.info("GET /admin/users/{} - Fetching user by id", id);
         
-        if (userOptional.isPresent()) {
-            UserResponseDto user = userOptional.get();
-            return ResponseEntity.ok(user);
-        }
-        return ResponseEntity.notFound().build();
+        UserResponseDto user = adminUserService.findById(id);
+        logger.info("GET /admin/users/{} - User found", id);
+        return ResponseEntity.ok(user);
     }
     
     @PostMapping
     public ResponseEntity<UserResponseDto> createUser(@Valid @RequestBody CreateUserRequestDto createUserRequestDto) {
+        logger.info("POST /admin/users - Creating new user with username: {}", createUserRequestDto.getUsername());
+        
         UserResponseDto createdUser = adminUserService.create(createUserRequestDto);
+        logger.info("POST /admin/users - User created successfully with id: {}", createdUser.getId());
         return ResponseEntity.status(HttpStatus.CREATED).body(createdUser);
     }
     
@@ -56,19 +62,19 @@ public class AdminUserController {
     public ResponseEntity<UserResponseDto> updateUser(
             @PathVariable String id, 
             @Valid @RequestBody UpdateUserRequestDto updateUserRequestDto) {
+        logger.info("PUT /admin/users/{} - Updating user", id);
+        
         UserResponseDto updatedUser = adminUserService.update(id, updateUserRequestDto);
-        if (updatedUser != null) {
-            return ResponseEntity.ok(updatedUser);
-        }
-        return ResponseEntity.notFound().build();
+        logger.info("PUT /admin/users/{} - User updated successfully", id);
+        return ResponseEntity.ok(updatedUser);
     }
     
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteUser(@PathVariable String id) {
-        boolean deleted = adminUserService.delete(id);
-        if (deleted) {
-            return ResponseEntity.noContent().build();
-        }
-        return ResponseEntity.notFound().build();
+        logger.info("DELETE /admin/users/{} - Deleting user", id);
+        
+        adminUserService.delete(id);
+        logger.info("DELETE /admin/users/{} - User deleted successfully", id);
+        return ResponseEntity.noContent().build();
     }
 }
